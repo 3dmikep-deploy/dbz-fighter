@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>DBZ Fighter — Fusion Battle</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Russo+One&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0a0a1a;
+  color: #fff;
+  font-family: 'Russo One', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.stars {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(ellipse at center, #0d0d2b 0%, #020210 100%);
+  z-index: -2;
+}
+
+.stars::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-image: 
+    radial-gradient(1px 1px at 10% 20%, #fff 50%, transparent 50%),
+    radial-gradient(1px 1px at 30% 60%, #fff 50%, transparent 50%),
+    radial-gradient(1px 1px at 50% 10%, #fff 50%, transparent 50%),
+    radial-gradient(1px 1px at 70% 80%, #fff 50%, transparent 50%),
+    radial-gradient(1px 1px at 90% 40%, #fff 50%, transparent 50%),
+    radial-gradient(1px 1px at 15% 90%, #fff 50%, transparent 50%),
+    radial-gradient(1px 1px at 85% 15%, #fff 50%, transparent 50%),
+    radial-gradient(1px 1px at 45% 45%, #fff 50%, transparent 50%);
+  z-index: -1;
+}
+
+.title-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  padding: 20px;
+}
+
+.logo {
+  font-family: 'Bangers', cursive;
+  font-size: 4rem;
+  background: linear-gradient(180deg, #FFD700 0%, #FF8C00 50%, #FF4500 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 20px rgba(255, 165, 0, 0.5));
+  letter-spacing: 4px;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #aaa;
+  margin-bottom: 40px;
+}
+
+.btn {
+  background: linear-gradient(135deg, #FF6B00, #FF4500);
+  color: #fff;
+  border: none;
+  padding: 16px 48px;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.3rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 0 30px rgba(255, 69, 0, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.btn:hover, .btn:active {
+  transform: scale(1.05);
+  box-shadow: 0 0 50px rgba(255, 69, 0, 0.7);
+}
+
+.btn-small {
+  padding: 10px 24px;
+  font-size: 0.9rem;
+}
+
+/* GAME SCREEN */
+.game-screen {
+  display: none;
+  padding: 16px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.game-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.game-title {
+  font-family: 'Bangers', cursive;
+  font-size: 2rem;
+  background: linear-gradient(180deg, #FFD700, #FF4500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.category-label {
+  font-size: 1.4rem;
+  text-align: center;
+  margin: 16px 0 12px;
+  color: #FFD700;
+  font-family: 'Bangers', cursive;
+  letter-spacing: 2px;
+}
+
+.slot-machine {
+  background: linear-gradient(145deg, #1a1a3a, #0f0f2a);
+  border: 2px solid #333;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.slot-machine::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: conic-gradient(from 0deg, transparent, rgba(255, 165, 0, 0.05), transparent, rgba(255, 69, 0, 0.05), transparent);
+  animation: spin 8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.char-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 3px solid #FFD700;
+  background: #111;
+  position: relative;
+  z-index: 1;
+}
+
+.char-name {
+  font-size: 1.5rem;
+  margin-top: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.char-stat {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-bar-container {
+  width: 80%;
+  height: 8px;
+  background: #222;
+  border-radius: 4px;
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.stat-bar.legendary { background: linear-gradient(90deg, #FFD700, #FF4500); }
+.stat-bar.great { background: linear-gradient(90deg, #7B68EE, #9370DB); }
+.stat-bar.good { background: linear-gradient(90deg, #00BFFF, #1E90FF); }
+.stat-bar.mid { background: linear-gradient(90deg, #32CD32, #228B22); }
+.stat-bar.low { background: #666; }
+
+.rolling .char-image {
+  animation: slotSpin 0.1s linear infinite;
+}
+
+@keyframes slotSpin {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.tap-btn {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  color: #000;
+  border: none;
+  padding: 14px 40px;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.2rem;
+  border-radius: 50px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+  animation: pulse 1.5s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.4); }
+  50% { box-shadow: 0 0 50px rgba(255, 215, 0, 0.8); }
+}
+
+.tap-btn:active { transform: scale(0.95); }
+
+/* ROSTER */
+.roster {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+.roster-slot {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 2px solid #333;
+  background: #111;
+  overflow: hidden;
+  position: relative;
+}
+
+.roster-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.roster-slot .roster-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.7);
+  font-size: 0.45rem;
+  text-align: center;
+  padding: 1px;
+  color: #FFD700;
+}
+
+.roster-slot.active {
+  border-color: #FFD700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.roster-slot.empty {
+  border-color: #222;
+}
+
+/* BATTLE SCREEN */
+.battle-screen {
+  display: none;
+  padding: 16px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.vs-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.fighter-card {
+  background: linear-gradient(145deg, #1a1a3a, #0f0f2a);
+  border: 2px solid #444;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  flex: 1;
+  max-width: 180px;
+}
+
+.fighter-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid #FFD700;
+}
+
+.fighter-card h3 {
+  font-size: 0.9rem;
+  margin-top: 8px;
+  color: #FFD700;
+}
+
+.fighter-card .power {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-top: 4px;
+}
+
+.vs-text {
+  font-family: 'Bangers', cursive;
+  font-size: 2.5rem;
+  color: #FF4500;
+  text-shadow: 0 0 20px rgba(255, 69, 0, 0.7);
+}
+
+.battle-log {
+  background: #0a0a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.battle-log .hit { color: #FF4500; }
+.battle-log .heal { color: #32CD32; }
+.battle-log .special { color: #FFD700; }
+.battle-log .dodge { color: #00BFFF; }
+
+.hp-bar-outer {
+  width: 100%;
+  height: 14px;
+  background: #222;
+  border-radius: 7px;
+  margin: 6px 0;
+  overflow: hidden;
+}
+
+.hp-bar {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.5s ease;
+}
+
+.hp-bar.player { background: linear-gradient(90deg, #32CD32, #00FF00); }
+.hp-bar.enemy { background: linear-gradient(90deg, #FF4500, #FF0000); }
+
+.result-screen {
+  display: none;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.result-text {
+  font-family: 'Bangers', cursive;
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.result-text.win {
+  background: linear-gradient(180deg, #FFD700, #FF8C00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.result-text.lose {
+  color: #FF4500;
+}
+
+.stats-summary {
+  background: #1a1a3a;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px auto;
+  max-width: 400px;
+  text-align: left;
+}
+
+.stats-summary .stat-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #222;
+  font-size: 0.9rem;
+}
+
+.stats-summary .stat-line:last-child { border: none; }
+.stats-summary .stat-val { color: #FFD700; }
+
+/* ANIMATIONS */
+.flash {
+  animation: flashAnim 0.3s ease;
+}
+
+@keyframes flashAnim {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(3); }
+  100% { filter: brightness(1); }
+}
+
+.shake {
+  animation: shakeAnim 0.4s ease;
+}
+
+@keyframes shakeAnim {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.category-progress {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.cat-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #333;
+}
+
+.cat-dot.done { background: #FFD700; }
+.cat-dot.current { background: #FF4500; box-shadow: 0 0 8px #FF4500; }
+</style>
+</head>
+<body>
+
+<div class="stars"></div>
+
+<!-- TITLE SCREEN -->
+<div class="title-screen" id="titleScreen">
+  <div class="logo">DBZ FIGHTER</div>
+  <div class="subtitle">Fusion Battle</div>
+  <p style="color:#777; max-width:320px; margin-bottom:30px; font-size:0.85rem; line-height:1.5;">
+    Roll 7 categories to build your fusion warrior. Get lucky rolls to beat the OP boss fusion!
+  </p>
+  <button class="btn" onclick="startGame()">FIGHT!</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="game-screen" id="gameScreen">
+  <div class="game-header">
+    <div class="game-title">DBZ FIGHTER</div>
+  </div>
+
+  <div class="category-progress" id="catProgress"></div>
+  <div class="category-label" id="categoryLabel">Power Level</div>
+
+  <div class="roster" id="roster"></div>
+
+  <div class="slot-machine" id="slotMachine">
+    <img class="char-image" id="charImage" src="" alt="?">
+    <div class="char-name" id="charName">???</div>
+    <div class="char-stat" id="charStat"></div>
+    <div class="stat-bar-container">
+      <div class="stat-bar" id="statBar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div style="text-align:center">
+    <button class="tap-btn" id="tapBtn" onclick="tapRoll()">TAP TO ROLL!</button>
+  </div>
+</div>
+
+<!-- BATTLE SCREEN -->
+<div class="battle-screen" id="battleScreen">
+  <div class="game-header">
+    <div class="game-title">⚔️ BATTLE ⚔️</div>
+  </div>
+
+  <div class="vs-container">
+    <div class="fighter-card" id="playerCard">
+      <img id="playerImg" src="" alt="You">
+      <h3 id="playerName">Your Fusion</h3>
+      <div class="power" id="playerPower">Power: ???</div>
+      <div class="hp-bar-outer"><div class="hp-bar player" id="playerHp" style="width:100%"></div></div>
+    </div>
+    <div class="vs-text">VS</div>
+    <div class="fighter-card" id="enemyCard">
+      <img id="enemyImg" src="" alt="Boss">
+      <h3 id="enemyName">Boss Fusion</h3>
+      <div class="power" id="enemyPower">Power: ???</div>
+      <div class="hp-bar-outer"><div class="hp-bar enemy" id="enemyHp" style="width:100%"></div></div>
+    </div>
+  </div>
+
+  <div class="battle-log" id="battleLog"></div>
+
+  <div style="text-align:center; margin-top:12px;">
+    <button class="btn btn-small" id="battleBtn" onclick="battleStep()">ATTACK!</button>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div class="result-screen" id="resultScreen">
+  <div class="result-text" id="resultText">YOU WIN!</div>
+  <div id="resultSub" style="color:#aaa; margin-bottom:20px;"></div>
+  <div class="stats-summary" id="statsSummary"></div>
+  <button class="btn" onclick="startGame()" style="margin-top:20px;">PLAY AGAIN</button>
+</div>
+
+<script>
+// Generate SVG avatar with character-specific colors and kanji/symbol
+function makeAvatar(name, colors, symbol) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <defs>
+      <radialGradient id="g" cx="50%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="${colors[0]}"/>
+        <stop offset="100%" stop-color="${colors[1]}"/>
+      </radialGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <circle cx="50" cy="50" r="48" fill="url(#g)" stroke="${colors[2] || colors[0]}" stroke-width="2"/>
+    <text x="50" y="58" text-anchor="middle" font-size="36" font-weight="bold" fill="${colors[3] || '#fff'}" filter="url(#glow)" font-family="sans-serif">${symbol}</text>
+  </svg>`;
+  return "data:image/svg+xml," + encodeURIComponent(svg);
+}
+
+const CHARACTERS = [
+  // Legendary tier (90-100)
+  { name: "MUI Goku", img: makeAvatar("MUI Goku", ["#c0c0ff","#4040ff","#8080ff","#fff"], "神"), tier: "legendary", stats: { power: 100, ki: 98, body: 95, race: 90, speed: 100, hax: 95, iq: 85 }},
+  { name: "Jiren", img: makeAvatar("Jiren", ["#ff4444","#880000","#ff2222","#fff"], "力"), tier: "legendary", stats: { power: 99, ki: 95, body: 98, race: 88, speed: 96, hax: 80, iq: 75 }},
+  { name: "Beerus", img: makeAvatar("Beerus", ["#9b59b6","#4a0080","#bf55ec","#fff"], "破"), tier: "legendary", stats: { power: 100, ki: 100, body: 90, race: 100, speed: 95, hax: 100, iq: 80 }},
+  { name: "Broly", img: makeAvatar("Broly", ["#44ff44","#006600","#00ff00","#fff"], "怒"), tier: "legendary", stats: { power: 100, ki: 85, body: 100, race: 95, speed: 90, hax: 70, iq: 40 }},
+  { name: "Vegito Blue", img: makeAvatar("Vegito Blue", ["#00bfff","#0040ff","#00d4ff","#fff"], "合"), tier: "legendary", stats: { power: 98, ki: 97, body: 96, race: 95, speed: 97, hax: 90, iq: 90 }},
+  { name: "Gogeta Blue", img: makeAvatar("Gogeta Blue", ["#ff8800","#0066ff","#ff4400","#fff"], "魂"), tier: "legendary", stats: { power: 99, ki: 98, body: 95, race: 95, speed: 99, hax: 92, iq: 85 }},
+  { name: "Whis", img: makeAvatar("Whis", ["#aaeeff","#4488cc","#66ccff","#003"], "天"), tier: "legendary", stats: { power: 100, ki: 100, body: 85, race: 100, speed: 100, hax: 100, iq: 100 }},
+
+  // Great tier (75-89)
+  { name: "SSJ4 Gogeta", img: makeAvatar("SSJ4 Gogeta", ["#ff4444","#cc0000","#ff6600","#FFD700"], "4"), tier: "great", stats: { power: 96, ki: 93, body: 92, race: 90, speed: 95, hax: 88, iq: 80 }},
+  { name: "Gohan Beast", img: makeAvatar("Gohan Beast", ["#ff44ff","#880088","#ff00ff","#fff"], "獣"), tier: "great", stats: { power: 95, ki: 90, body: 88, race: 85, speed: 88, hax: 75, iq: 95 }},
+  { name: "Frieza Black", img: makeAvatar("Frieza Black", ["#222","#000","#444","#ff0044"], "闇"), tier: "great", stats: { power: 97, ki: 92, body: 85, race: 92, speed: 90, hax: 85, iq: 90 }},
+  { name: "Hit", img: makeAvatar("Hit", ["#6644aa","#331166","#8855cc","#fff"], "時"), tier: "great", stats: { power: 85, ki: 80, body: 80, race: 82, speed: 98, hax: 100, iq: 90 }},
+  { name: "Cell Max", img: makeAvatar("Cell Max", ["#ff6622","#882200","#ff4400","#fff"], "∞"), tier: "great", stats: { power: 94, ki: 88, body: 95, race: 80, speed: 82, hax: 70, iq: 30 }},
+  { name: "Kid Buu", img: makeAvatar("Kid Buu", ["#ff88aa","#cc2255","#ff4488","#fff"], "狂"), tier: "great", stats: { power: 90, ki: 85, body: 90, race: 85, speed: 88, hax: 85, iq: 20 }},
+  { name: "SSB Vegeta", img: makeAvatar("SSB Vegeta", ["#0066ff","#002288","#0088ff","#FFD700"], "誇"), tier: "great", stats: { power: 92, ki: 90, body: 90, race: 90, speed: 88, hax: 75, iq: 85 }},
+  { name: "Golden Frieza", img: makeAvatar("Golden Frieza", ["#FFD700","#aa8800","#ffcc00","#400"], "帝"), tier: "great", stats: { power: 93, ki: 90, body: 82, race: 92, speed: 85, hax: 80, iq: 88 }},
+
+  // Good tier (55-74)
+  { name: "Goku SSJ3", img: makeAvatar("Goku SSJ3", ["#FFD700","#cc8800","#ffaa00","#fff"], "3"), tier: "good", stats: { power: 82, ki: 80, body: 78, race: 85, speed: 80, hax: 60, iq: 65 }},
+  { name: "Majin Vegeta", img: makeAvatar("Majin Vegeta", ["#8844cc","#440066","#aa55ff","#fff"], "M"), tier: "good", stats: { power: 80, ki: 78, body: 82, race: 85, speed: 78, hax: 55, iq: 80 }},
+  { name: "Perfect Cell", img: makeAvatar("Perfect Cell", ["#44cc44","#006622","#22aa22","#fff"], "完"), tier: "good", stats: { power: 75, ki: 78, body: 80, race: 70, speed: 72, hax: 70, iq: 92 }},
+  { name: "Ultimate Gohan", img: makeAvatar("Ultimate Gohan", ["#ff8844","#cc4400","#ff6622","#fff"], "飯"), tier: "good", stats: { power: 78, ki: 75, body: 75, race: 80, speed: 74, hax: 55, iq: 90 }},
+  { name: "Piccolo", img: makeAvatar("Piccolo", ["#228822","#004400","#33aa33","#fff"], "魔"), tier: "good", stats: { power: 70, ki: 75, body: 72, race: 75, speed: 68, hax: 65, iq: 95 }},
+  { name: "Android 17", img: makeAvatar("Android 17", ["#4488ff","#224488","#2266cc","#fff"], "17"), tier: "good", stats: { power: 78, ki: 80, body: 75, race: 65, speed: 76, hax: 85, iq: 82 }},
+  { name: "Android 18", img: makeAvatar("Android 18", ["#ffcc44","#aa8822","#ddaa22","#fff"], "18"), tier: "good", stats: { power: 68, ki: 72, body: 70, race: 65, speed: 74, hax: 80, iq: 80 }},
+  { name: "Future Trunks", img: makeAvatar("Future Trunks", ["#6688ff","#2244aa","#4466dd","#fff"], "剣"), tier: "good", stats: { power: 76, ki: 74, body: 76, race: 82, speed: 78, hax: 60, iq: 78 }},
+  { name: "Goku Black", img: makeAvatar("Goku Black", ["#880044","#330022","#aa0055","#ff44aa"], "薔"), tier: "good", stats: { power: 80, ki: 82, body: 72, race: 100, speed: 78, hax: 75, iq: 85 }},
+
+  // Mid tier (35-54)
+  { name: "Tien", img: makeAvatar("Tien", ["#ddaa66","#886633","#cc9944","#fff"], "👁"), tier: "mid", stats: { power: 45, ki: 55, body: 60, race: 40, speed: 50, hax: 50, iq: 70 }},
+  { name: "Krillin", img: makeAvatar("Krillin", ["#ffaa66","#cc7733","#ff8844","#fff"], "栗"), tier: "mid", stats: { power: 40, ki: 50, body: 45, race: 40, speed: 48, hax: 45, iq: 75 }},
+  { name: "Goku SSJ1", img: makeAvatar("Goku SSJ1", ["#FFD700","#ccaa00","#eecc00","#fff"], "悟"), tier: "mid", stats: { power: 55, ki: 55, body: 60, race: 85, speed: 58, hax: 30, iq: 50 }},
+  { name: "Vegeta SSJ1", img: makeAvatar("Vegeta SSJ1", ["#FFD700","#aa8800","#ddbb00","#003"], "V"), tier: "mid", stats: { power: 54, ki: 52, body: 58, race: 85, speed: 55, hax: 25, iq: 72 }},
+  { name: "Ginyu", img: makeAvatar("Ginyu", ["#8844aa","#442266","#6633aa","#fff"], "特"), tier: "mid", stats: { power: 42, ki: 40, body: 50, race: 55, speed: 45, hax: 90, iq: 50 }},
+  { name: "Dabura", img: makeAvatar("Dabura", ["#cc3333","#661111","#aa2222","#fff"], "魔"), tier: "mid", stats: { power: 55, ki: 58, body: 55, race: 70, speed: 50, hax: 65, iq: 60 }},
+
+  // Low tier (10-34)
+  { name: "Yamcha", img: makeAvatar("Yamcha", ["#cc8844","#664422","#aa6633","#fff"], "狼"), tier: "low", stats: { power: 15, ki: 20, body: 30, race: 30, speed: 25, hax: 5, iq: 45 }},
+  { name: "Mr. Satan", img: makeAvatar("Mr. Satan", ["#884422","#442211","#663311","#FFD700"], "S"), tier: "low", stats: { power: 8, ki: 2, body: 35, race: 30, speed: 20, hax: 0, iq: 40 }},
+  { name: "Chiaotzu", img: makeAvatar("Chiaotzu", ["#ffcccc","#ff8888","#ffaaaa","#c00"], "餃"), tier: "low", stats: { power: 12, ki: 30, body: 15, race: 35, speed: 18, hax: 40, iq: 50 }},
+  { name: "Saibaman", img: makeAvatar("Saibaman", ["#66aa22","#335511","#448811","#fff"], "☠"), tier: "low", stats: { power: 18, ki: 10, body: 20, race: 20, speed: 22, hax: 15, iq: 5 }},
+  { name: "Raditz", img: makeAvatar("Raditz", ["#553322","#221100","#774433","#fff"], "R"), tier: "low", stats: { power: 22, ki: 18, body: 28, race: 80, speed: 25, hax: 5, iq: 35 }},
+  { name: "Nappa", img: makeAvatar("Nappa", ["#887744","#443322","#665533","#fff"], "N"), tier: "low", stats: { power: 28, ki: 22, body: 40, race: 80, speed: 20, hax: 5, iq: 25 }},
+];
+
+const CATEGORIES = [
+  { key: "power", label: "Power Level", emoji: "💪" },
+  { key: "ki", label: "Ki Control", emoji: "🔥" },
+  { key: "body", label: "Body", emoji: "🏋️" },
+  { key: "race", label: "Race", emoji: "👽" },
+  { key: "speed", label: "Speed", emoji: "⚡" },
+  { key: "hax", label: "Hax", emoji: "🌀" },
+  { key: "iq", label: "IQ", emoji: "🧠" }
+];
+
+const BOSS_FUSIONS = [
+  { name: "Omega Gogeta", desc: "Gogeta + Broly", power: 550 },
+  { name: "Ultra Vegito", desc: "Vegito + Jiren", power: 580 },
+  { name: "Beerus Black", desc: "Beerus + Goku Black", power: 600 },
+  { name: "Perfect Whis Cell", desc: "Whis + Cell", power: 520 },
+  { name: "MUI Broly", desc: "MUI Goku + Broly", power: 570 },
+  { name: "Golden Beerus", desc: "Frieza + Beerus", power: 590 },
+];
+
+// Fallback character portraits using colored initials
+function getCharColor(tier) {
+  switch(tier) {
+    case 'legendary': return '#FFD700';
+    case 'great': return '#9370DB';
+    case 'good': return '#1E90FF';
+    case 'mid': return '#32CD32';
+    case 'low': return '#666';
+    default: return '#888';
+  }
+}
+
+// Alias img as avatar for game code
+CHARACTERS.forEach(ch => {
+  ch.avatar = ch.img;
+});
+
+let currentCat = 0;
+let rolling = false;
+let rollInterval = null;
+let playerRolls = [];
+let playerHP = 1000;
+let enemyHP = 1000;
+let playerMaxHP = 1000;
+let enemyMaxHP = 1000;
+let currentBoss = null;
+let battleOver = false;
+
+function startGame() {
+  currentCat = 0;
+  playerRolls = [];
+  document.getElementById('titleScreen').style.display = 'none';
+  document.getElementById('battleScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'block';
+  
+  updateCategoryUI();
+  updateRoster();
+  resetSlot();
+}
+
+function updateCategoryUI() {
+  const cat = CATEGORIES[currentCat];
+  document.getElementById('categoryLabel').textContent = cat.emoji + ' ' + cat.label;
+  
+  let dots = '';
+  CATEGORIES.forEach((c, i) => {
+    if (i < currentCat) dots += '<div class="cat-dot done"></div>';
+    else if (i === currentCat) dots += '<div class="cat-dot current"></div>';
+    else dots += '<div class="cat-dot"></div>';
+  });
+  document.getElementById('catProgress').innerHTML = dots;
+}
+
+function updateRoster() {
+  const roster = document.getElementById('roster');
+  roster.innerHTML = '';
+  CATEGORIES.forEach((cat, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'roster-slot' + (i === currentCat ? ' active' : '') + (i >= playerRolls.length ? ' empty' : '');
+    if (i < playerRolls.length) {
+      const img = document.createElement('img');
+      img.src = playerRolls[i].avatar;
+      slot.appendChild(img);
+      const label = document.createElement('div');
+      label.className = 'roster-label';
+      label.textContent = cat.label.split(' ')[0];
+      slot.appendChild(label);
+    }
+    roster.appendChild(slot);
+  });
+}
+
+function resetSlot() {
+  const img = document.getElementById('charImage');
+  img.src = '';
+  img.style.background = '#222';
+  document.getElementById('charName').textContent = '???';
+  document.getElementById('charStat').textContent = 'Tap to roll!';
+  document.getElementById('statBar').style.width = '0%';
+  document.getElementById('statBar').className = 'stat-bar';
+  document.getElementById('tapBtn').textContent = 'TAP TO ROLL!';
+  document.getElementById('tapBtn').disabled = false;
+  rolling = false;
+}
+
+function tapRoll() {
+  if (rolling) {
+    // Stop rolling
+    stopRoll();
+    return;
+  }
+  
+  // Start rolling
+  rolling = true;
+  document.getElementById('slotMachine').classList.add('rolling');
+  document.getElementById('tapBtn').textContent = 'TAP TO STOP!';
+  
+  rollInterval = setInterval(() => {
+    const rand = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
+    const cat = CATEGORIES[currentCat];
+    const statVal = rand.stats[cat.key];
+    
+    document.getElementById('charImage').src = rand.avatar;
+    document.getElementById('charName').textContent = rand.name;
+    document.getElementById('charStat').textContent = cat.label + ': ' + statVal;
+    document.getElementById('statBar').style.width = statVal + '%';
+    document.getElementById('statBar').className = 'stat-bar ' + rand.tier;
+  }, 80);
+}
+
+function stopRoll() {
+  clearInterval(rollInterval);
+  rolling = false;
+  document.getElementById('slotMachine').classList.remove('rolling');
+  
+  // Weighted random — lower tiers more likely
+  const weights = { low: 30, mid: 28, good: 22, great: 14, legendary: 6 };
+  const pool = [];
+  CHARACTERS.forEach(ch => {
+    for (let i = 0; i < weights[ch.tier]; i++) pool.push(ch);
+  });
+  
+  const selected = pool[Math.floor(Math.random() * pool.length)];
+  const cat = CATEGORIES[currentCat];
+  const statVal = selected.stats[cat.key];
+  
+  document.getElementById('charImage').src = selected.avatar;
+  document.getElementById('charName').textContent = selected.name;
+  document.getElementById('charStat').textContent = cat.label + ': ' + statVal;
+  document.getElementById('statBar').style.width = statVal + '%';
+  document.getElementById('statBar').className = 'stat-bar ' + selected.tier;
+  
+  // Flash effect
+  document.getElementById('slotMachine').classList.add('flash');
+  setTimeout(() => document.getElementById('slotMachine').classList.remove('flash'), 300);
+  
+  playerRolls.push(selected);
+  
+  document.getElementById('tapBtn').textContent = 'NEXT >';
+  document.getElementById('tapBtn').onclick = nextCategory;
+}
+
+function nextCategory() {
+  currentCat++;
+  document.getElementById('tapBtn').onclick = tapRoll;
+  
+  if (currentCat >= CATEGORIES.length) {
+    startBattle();
+    return;
+  }
+  
+  updateCategoryUI();
+  updateRoster();
+  resetSlot();
+}
+
+function calcFusionPower(rolls) {
+  let total = 0;
+  rolls.forEach((ch, i) => {
+    total += ch.stats[CATEGORIES[i].key];
+  });
+  return total;
+}
+
+function startBattle() {
+  document.getElementById('gameScreen').style.display = 'none';
+  document.getElementById('battleScreen').style.display = 'block';
+  
+  const playerPower = calcFusionPower(playerRolls);
+  
+  // Pick boss based on player power
+  currentBoss = BOSS_FUSIONS[Math.floor(Math.random() * BOSS_FUSIONS.length)];
+  const bossPower = currentBoss.power;
+  
+  playerMaxHP = 500 + playerPower * 3;
+  playerHP = playerMaxHP;
+  enemyMaxHP = 500 + bossPower * 3;
+  enemyHP = enemyMaxHP;
+  battleOver = false;
+  
+  // Best character for player display
+  const best = playerRolls.reduce((a, b) => {
+    const aMax = Math.max(...Object.values(a.stats));
+    const bMax = Math.max(...Object.values(b.stats));
+    return aMax > bMax ? a : b;
+  });
+  
+  document.getElementById('playerImg').src = best.avatar;
+  document.getElementById('playerName').textContent = 'Your Fusion';
+  document.getElementById('playerPower').textContent = 'Power: ' + playerPower;
+  document.getElementById('playerHp').style.width = '100%';
+  
+  // Boss avatar
+  const bossCanvas = document.createElement('canvas');
+  bossCanvas.width = 150; bossCanvas.height = 150;
+  const bctx = bossCanvas.getContext('2d');
+  const bg = bctx.createLinearGradient(0, 0, 150, 150);
+  bg.addColorStop(0, '#FF0000');
+  bg.addColorStop(1, '#8B0000');
+  bctx.fillStyle = bg;
+  bctx.fillRect(0, 0, 150, 150);
+  bctx.fillStyle = '#fff';
+  bctx.font = 'bold 36px Russo One';
+  bctx.textAlign = 'center';
+  bctx.textBaseline = 'middle';
+  bctx.fillText('BOSS', 75, 55);
+  bctx.font = '13px Russo One';
+  bctx.fillText(currentBoss.name, 75, 100);
+  bctx.strokeStyle = '#FF4500';
+  bctx.lineWidth = 4;
+  bctx.strokeRect(2, 2, 146, 146);
+  
+  document.getElementById('enemyImg').src = bossCanvas.toDataURL();
+  document.getElementById('enemyName').textContent = currentBoss.name;
+  document.getElementById('enemyPower').textContent = 'Power: ' + bossPower;
+  document.getElementById('enemyHp').style.width = '100%';
+  
+  document.getElementById('battleLog').innerHTML = '<div class="special">⚔️ ' + currentBoss.name + ' (' + currentBoss.desc + ') appears!</div>';
+  document.getElementById('battleBtn').textContent = 'ATTACK!';
+  document.getElementById('battleBtn').style.display = 'inline-block';
+}
+
+function battleStep() {
+  if (battleOver) return;
+  
+  const playerPower = calcFusionPower(playerRolls);
+  const bossPower = currentBoss.power;
+  const log = document.getElementById('battleLog');
+  
+  // Player attacks
+  const pDmg = Math.floor((playerPower / 7 + Math.random() * 40) * (0.8 + Math.random() * 0.4));
+  const pCrit = Math.random() < 0.15;
+  const finalPDmg = pCrit ? pDmg * 2 : pDmg;
+  
+  enemyHP = Math.max(0, enemyHP - finalPDmg);
+  document.getElementById('enemyHp').style.width = (enemyHP / enemyMaxHP * 100) + '%';
+  document.getElementById('enemyCard').classList.add('shake');
+  setTimeout(() => document.getElementById('enemyCard').classList.remove('shake'), 400);
+  
+  const pMsg = pCrit 
+    ? '<div class="special">💥 CRITICAL! You deal ' + finalPDmg + ' damage!</div>'
+    : '<div class="hit">👊 You deal ' + finalPDmg + ' damage!</div>';
+  log.innerHTML += pMsg;
+  
+  if (enemyHP <= 0) {
+    endBattle(true);
+    return;
+  }
+  
+  // Boss attacks
+  const eDmg = Math.floor((bossPower / 7 + Math.random() * 35) * (0.8 + Math.random() * 0.4));
+  const dodge = Math.random() < (playerPower > bossPower ? 0.2 : 0.08);
+  
+  if (dodge) {
+    log.innerHTML += '<div class="dodge">💨 You dodged the attack!</div>';
+  } else {
+    const eCrit = Math.random() < 0.12;
+    const finalEDmg = eCrit ? eDmg * 2 : eDmg;
+    playerHP = Math.max(0, playerHP - finalEDmg);
+    document.getElementById('playerHp').style.width = (playerHP / playerMaxHP * 100) + '%';
+    document.getElementById('playerCard').classList.add('shake');
+    setTimeout(() => document.getElementById('playerCard').classList.remove('shake'), 400);
+    
+    const eMsg = eCrit
+      ? '<div class="special">🔥 ' + currentBoss.name + ' CRITS for ' + finalEDmg + '!</div>'
+      : '<div class="hit">💀 ' + currentBoss.name + ' deals ' + finalEDmg + ' damage!</div>';
+    log.innerHTML += eMsg;
+  }
+  
+  if (playerHP <= 0) {
+    endBattle(false);
+    return;
+  }
+  
+  log.innerHTML += '<hr style="border-color:#222; margin:4px 0;">';
+  log.scrollTop = log.scrollHeight;
+}
+
+function endBattle(won) {
+  battleOver = true;
+  const log = document.getElementById('battleLog');
+  
+  if (won) {
+    log.innerHTML += '<div class="special">🏆 YOU DEFEATED ' + currentBoss.name.toUpperCase() + '! 🏆</div>';
+  } else {
+    log.innerHTML += '<div class="hit">💀 ' + currentBoss.name + ' destroyed your fusion...</div>';
+  }
+  log.scrollTop = log.scrollHeight;
+  
+  document.getElementById('battleBtn').textContent = 'RESULTS';
+  document.getElementById('battleBtn').onclick = () => showResults(won);
+}
+
+function showResults(won) {
+  document.getElementById('battleScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  
+  const rt = document.getElementById('resultText');
+  rt.textContent = won ? '🏆 YOU WIN! 🏆' : '💀 DEFEATED 💀';
+  rt.className = 'result-text ' + (won ? 'win' : 'lose');
+  
+  document.getElementById('resultSub').textContent = won 
+    ? 'Your fusion destroyed ' + currentBoss.name + '!'
+    : currentBoss.name + ' was too powerful...';
+  
+  let html = '';
+  playerRolls.forEach((ch, i) => {
+    const cat = CATEGORIES[i];
+    const val = ch.stats[cat.key];
+    html += '<div class="stat-line"><span>' + cat.emoji + ' ' + cat.label + ': ' + ch.name + '</span><span class="stat-val">' + val + '</span></div>';
+  });
+  html += '<div class="stat-line" style="border-top:2px solid #FFD700; margin-top:8px; padding-top:8px;"><span>⚡ Total Fusion Power</span><span class="stat-val">' + calcFusionPower(playerRolls) + '</span></div>';
+  html += '<div class="stat-line"><span>👹 Boss Power</span><span class="stat-val">' + currentBoss.power + '</span></div>';
+  
+  document.getElementById('statsSummary').innerHTML = html;
+  document.getElementById('battleBtn').onclick = battleStep;
+}
+</script>
+</body>
+</html>
